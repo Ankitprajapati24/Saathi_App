@@ -13,8 +13,10 @@ def init_db():
         conn.execute('''CREATE TABLE IF NOT EXISTS reminders (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             medicine_name TEXT NOT NULL,
+            reminder_date TEXT NOT NULL,
             reminder_time TEXT NOT NULL
         )''')
+
 
 # Add a new reminder
 @app.route('/add_reminder', methods=['POST'])
@@ -22,16 +24,18 @@ def add_reminder():
     data = request.json
     medicine_name = data['medicineName']
     reminder_time = data['reminderTime']
+    reminder_date = data['reminderDate']
+    
     with sqlite3.connect(DATABASE) as conn:
-        conn.execute("INSERT INTO reminders (medicine_name, reminder_time) VALUES (?, ?)", 
-                     (medicine_name, reminder_time))
+        conn.execute("INSERT INTO reminders (medicine_name, reminder_time, reminder_date) VALUES (?, ?, ?)", 
+                     (medicine_name, reminder_time, reminder_date))
     return jsonify({'status': 'success'})
 
 # Get all reminders
 @app.route('/get_reminders', methods=['GET'])
 def get_reminders():
     with sqlite3.connect(DATABASE) as conn:
-        reminders = conn.execute("SELECT id, medicine_name, reminder_time FROM reminders").fetchall()
+        reminders = conn.execute("SELECT id, medicine_name, reminder_time, reminder_date FROM reminders").fetchall()
     return jsonify(reminders)
 
 # API to check current reminders (called by frontend)
@@ -40,6 +44,7 @@ def check_reminders():
     now = datetime.now().strftime("%H:%M")
     with sqlite3.connect(DATABASE) as conn:
         reminders = conn.execute("SELECT * FROM reminders WHERE reminder_time = ?", (now,)).fetchall()
+        reminders = conn.execute("SELECT * FROM reminders WHERE reminder_date = ?", (now,)).fetchall()
     return jsonify(reminders)
 
 # Update a reminder (UPDATE)
@@ -49,10 +54,11 @@ def update_reminder():
     reminder_id = data['id']
     medicine_name = data['medicineName']
     reminder_time = data['reminderTime']
+    reminder_date = data['reminderDate']
     with sqlite3.connect(DATABASE) as conn:
         conn.execute(
             "UPDATE reminders SET medicine_name = ?, reminder_time = ? WHERE id = ?",
-            (medicine_name, reminder_time, reminder_id)
+            (medicine_name, reminder_time, reminder_id,reminder_date)
         )
     return jsonify({'status': 'success'})
 

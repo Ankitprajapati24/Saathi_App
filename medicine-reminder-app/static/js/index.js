@@ -1,3 +1,21 @@
+// Function to show notifications
+const showNotification = (message, type = 'info') => {
+    const notificationContainer = document.getElementById('notification-container');
+
+    // Create a notification element
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.innerText = message;
+
+    // Append to the container
+    notificationContainer.appendChild(notification);
+
+    // Remove the notification after 5 seconds
+    setTimeout(() => {
+        notification.remove();
+    }, 5000);
+};
+
 // Load reminders
 async function loadReminders() {
     const response = await fetch('/get_reminders');
@@ -5,8 +23,8 @@ async function loadReminders() {
     const remindersList = document.getElementById('remindersList');
     remindersList.innerHTML = reminders.map(r => `
         <div class="reminder" data-id="${r[0]}">
-            <strong>${r[1]}</strong> at <em>${r[2]}</em>
-            <button class="btn-edit" onclick="editReminder(${r[0]}, '${r[1]}', '${r[2]}')">Edit</button>
+            <strong>${r[1]}</strong> on <em>${r[2]}</em> at <em>${r[3]}</em>
+            <button class="btn-edit" onclick="editReminder(${r[0]}, '${r[1]}', '${r[2]}', '${r[3]}')">Edit</button>
             <button class="btn-delete" onclick="deleteReminder(${r[0]})">Delete</button>
         </div>
     `).join('');
@@ -15,40 +33,42 @@ async function loadReminders() {
 // Add new reminder
 document.getElementById('scheduleReminder').addEventListener('click', async () => {
     const medicineName = document.getElementById('medicineName').value;
+    const reminderDate = document.getElementById('reminderDate').value;
     const reminderTime = document.getElementById('reminderTime').value;
 
-    if (!medicineName || !reminderTime) {
-        alert('Please provide all fields.');
+    if (!medicineName || !reminderDate || !reminderTime) {
+        showNotification('All fields are required!', 'error');
         return;
     }
 
     await fetch('/add_reminder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ medicineName, reminderTime })
+        body: JSON.stringify({ medicineName, reminderDate, reminderTime })
     });
 
-    alert('Reminder scheduled!');
+    showNotification('Reminder scheduled successfully!', 'success');
     loadReminders();
 });
 
 // Edit reminder
-async function editReminder(id, oldName, oldTime) {
+async function editReminder(id, oldName, oldDate, oldTime) {
     const newName = prompt('Enter new medicine name:', oldName);
-    const newTime = prompt('Enter new reminder time:', oldTime);
+    const newDate = prompt('Enter new reminder date (YYYY-MM-DD):', oldDate);
+    const newTime = prompt('Enter new reminder time (HH:MM AM/PM):', oldTime);
 
-    if (!newName || !newTime) {
-        alert('Both fields are required!');
+    if (!newName || !newDate || !newTime) {
+        showNotification('All fields are required!', 'error');
         return;
     }
 
     await fetch('/update_reminder', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, medicineName: newName, reminderTime: newTime })
+        body: JSON.stringify({ id, medicineName: newName, reminderDate: newDate, reminderTime: newTime })
     });
 
-    alert('Reminder updated!');
+    showNotification('Reminder updated successfully!', 'success');
     loadReminders();
 }
 
@@ -62,9 +82,24 @@ async function deleteReminder(id) {
         body: JSON.stringify({ id })
     });
 
-    alert('Reminder deleted!');
+    showNotification('Reminder deleted successfully!', 'success');
     loadReminders();
 }
 
-// Load reminders on page load
-document.addEventListener('DOMContentLoaded', loadReminders);
+
+
+// Poll reminders for notifications
+async function checkReminders() {
+    const response = await fetch('/check_reminders');
+    const reminders = await response.json();
+
+    reminders.forEach(reminder => {
+        showNotification(`Time to take your medicine: ${reminder[1]}`, 'info');
+    });
+}
+
+// Initialize the app
+document.addEventListener('DOMContentLoaded', () => {
+    loadReminders();
+    setInterval(checkReminders, 60000); // Check every minute
+});

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Medicine Reminder App</title>
+    <title>Saathi Medicine App</title>
     <link
       rel="stylesheet"
       href="{{ url_for('static', filename='css/index.processed.css') }}"
@@ -14,16 +14,17 @@
       <h1>Medicine Reminder App</h1>
       <div class="form">
         <input type="text" id="medicineName" placeholder="Medicine Name" />
+        <input type="date" id="reminderDate" placeholder="Reminder Date" />
         <input type="time" id="reminderTime" />
-        <button id="scheduleReminder">Schedule Reminder</button>
+
+        <button id="scheduleReminder">Schedule Medicine</button>
       </div>
       <div id="remindersList"></div>
     </div>
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 
+
     <!-- Notification Container -->
     <div id="notification-container"></div>
-
-    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
   </body>
 </html>
